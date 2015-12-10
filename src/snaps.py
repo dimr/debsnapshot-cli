@@ -15,8 +15,8 @@ def handle_interrupt(func):
     return wrap()
 
 
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.basicConfig(level=logging.INFO)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+logging.basicConfig(level=logging.CRITICAL)
 logger = logging.getLogger('__apt-snapshot__')
 # logger.propagate = False
 
@@ -60,7 +60,7 @@ class PackageParser(object):
 
         if not self.response:
             # print self.response.status_code, "not installed from official debian repository"
-            logger.warning(self.package_name, ' not installed from official debian repository')
+            logger.warning(self.package_name + ' not installed from official debian repository')
             sys.exit()
             # self.__binary_versions = None
         self._target_hash = ''
@@ -78,8 +78,10 @@ class PackageParser(object):
         except (ValueError, AttributeError) as e:
             print "CANNOT"
             print e
-        print(self.system_arch)
-        print(self.is_installed)
+        # print(self.system_arch)
+        # print(self.is_installed)
+        # print(self.is_latest)
+        self._target_version = None
         print(self.all_binary_versions)
         # print(self.previous_version)
         if version is None:
@@ -131,8 +133,11 @@ class PackageParser(object):
         self._all_binary_versions = b
 
     @property
-    def latest(self):
-        return True if apt.apt_pkg.version_compare(self.all_binary_versions[0], self.installed_version) == 0 else False
+    def is_latest(self):
+        if self.is_installed:
+            return True if apt.apt_pkg.version_compare(self.all_binary_versions[0], self.installed_version) == 0 else False
+        print("NOT INSTALLED")
+        return False
 
     @property
     def previous_version(self):
@@ -160,7 +165,10 @@ class PackageParser(object):
 
     @property
     def target_version(self):
-        return self._target_version
+        try:
+            return self._target_version
+        except AttributeError:
+            logger.warning("target version has not yet been set")
 
     @target_version.setter
     def target_version(self, version):
@@ -169,9 +177,12 @@ class PackageParser(object):
             logger.error("Have not set target version yet\n Settings target version = previous version")
             print(self.previous_version)
             self._target_version = self.previous_version
+        if version in self.all_binary_versions:
+            logger.info('PACKAGE FOUND')
         try:
-            loc_version = int(version)
             self._target_version = self.all_binary_versions[self.all_binary_versions.index(version)]
+
+            logger.info("requests version {version}".format(version=version))
         except ValueError:
             logger.error("not such package version {package}:{version}".format(package=self.package_name, version=version))
 
@@ -212,22 +223,26 @@ class PackageParser(object):
         if r:
             return r.json()['result'][0]['first_seen']
 
-
-            #
-
     def __str__(self):
-        return "Package name: " + self.package_name + ", Installed Version: " + self.installed_version + " Target Version: " + self.target_version + " Origin: " + self.origin + " Archive: " + self.archive  # p = PackageParse("rstudio")
+        return "Package name: " + self.package_name + ", Installed Version: " + str(self.installed_version) \
+               + " is Latest: " + str(self.is_latest) + " Previous Version: " + str(self.previous_version) +\
+        " Target Version: " + str(self.target_version)# p = PackageParse("rstudio")
 
 
 if __name__ == '__main__':
 
-    pack = 'meshlab'
+    pack = 'grep'
 
     if len(sys.argv) == 1:
         p = PackageParser(pack)
-        # print p
+        p.target_version = '2.21~pre-2.20.90-a07a4-2'
+        print p.target_version
+        print p.target_version_hash
+        print p.target_first_seen
+        print p
     else:
         p = PackageParser(sys.argv[1], )
+        print p
     # print p.all_binary_versions
     # print p.installed_version
     # print p.previous_version
