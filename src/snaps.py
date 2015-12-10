@@ -15,8 +15,8 @@ def handle_interrupt(func):
     return wrap()
 
 
-logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-logging.basicConfig(level=logging.CRITICAL)
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("requests").setLevel(logging.CRITICAL)
 logger = logging.getLogger('__apt-snapshot__')
 # logger.propagate = False
 
@@ -225,17 +225,17 @@ class PackageParser(object):
 
     def __str__(self):
         return "Package name: " + self.package_name + ", Installed Version: " + str(self.installed_version) \
-               + " is Latest: " + str(self.is_latest) + " Previous Version: " + str(self.previous_version) +\
-        " Target Version: " + str(self.target_version)# p = PackageParse("rstudio")
+               + " is Latest: " + str(self.is_latest) + " Previous Version: " + str(self.previous_version) + \
+               " Target Version: " + str(self.target_version) + " First seen: " + str(self.target_first_seen)
 
 
 if __name__ == '__main__':
 
-    pack = 'grep'
+    pack = 'vim'
 
     if len(sys.argv) == 1:
         p = PackageParser(pack)
-        p.target_version = '2.21~pre-2.20.90-a07a4-2'
+        p.target_version = '1:6.4+7.0g01-1'
         print p.target_version
         print p.target_version_hash
         print p.target_first_seen
