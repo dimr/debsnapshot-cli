@@ -231,7 +231,7 @@ class PackageParser(object):
 
 if __name__ == '__main__':
 
-    pack = 'blender'
+    pack = 'meshlab'
 
     if len(sys.argv) == 1:
         p = PackageParser(pack)
