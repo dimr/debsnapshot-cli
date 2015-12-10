@@ -65,13 +65,22 @@ class PackageParser(object):
             # self.__binary_versions = None
         self._target_hash = ''
         self._all_binary_versions = [str(version['binary_version']) for version in self.response.json()['result']]
-        print(self.all_binary_versions)
-        print(self.is_installed)
+        self._previous_version = None
+        try:
+            self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
+
+            print(self.installed_version)
+            print(self.previous_version)
+        except (ValueError, AttributeError) as e:
+            print "CANNOT"
+            print e
         print(self.system_arch)
-        print(self.installed_version)
-       # print(self.previous_version)
+        print(self.is_installed)
+        print(self.all_binary_versions)
+        # print(self.previous_version)
         if version is None:
             self.target_version = ''
+
 
     @property
     def system_arch(self):
@@ -81,12 +90,14 @@ class PackageParser(object):
             return libc6_arch
         arch = self.cache[self.package].architecture()
         assert (arch == libc6_arch), 'Problem with system architectures -> {package}={local_arch} , libc6={libc6_arch}'.format(package=self.package_name, local_arch=arch,
-                                                                                                                             libc6_arch=libc6_arch)
+                                                                                                                               libc6_arch=libc6_arch)
         return arch
+
 
     @property
     def is_installed(self):
         return self.cache[self.package].is_installed
+
 
     @property
     def installed_version(self):
@@ -100,47 +111,64 @@ class PackageParser(object):
             return None
         return self.package.installed.version
 
+
     @property
     def archive(self):
         return self.package_name.installed.origins[0].archive
+
 
     @property
     def origin(self):
         logger.debug('installed from %s' % self.package_name.installed.origins[0].origin)
         return self.package_name.installed.origins[0].origin
 
+
     @property
     def all_binary_versions(self):
         # here version works in most packages, binary_version does not
-
         return self._all_binary_versions
+
 
     @all_binary_versions.setter
     def all_binary_versions(self, b):
         self._all_binary_versions = b
 
+
     @property
     def latest(self):
         return True if apt.apt_pkg.version_compare(self.all_binary_versions[0], self.installed_version) == 0 else False
+
 
     @property
     def previous_version(self):
         return self._previous_version
 
+
     @previous_version.setter
     def previous_version(self, p_v):
-        if len(self.all_binary_versions) == 1:  # pasystray
+        if not self.is_installed:
+            self._previous_version = None
+            logger.warning("SETTING PREVIOUS VERSION TO None")
+            return
+        if len(self.all_binary_versions) == 1:  # peasytray
             logger.warning("only one version available {version}".format(version=self.installed_version))
-            sys.exit()
-        logger.debug("picking previous version")
-        try:
-            self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
-        except Exception:
-            pass
+            # setting previous version equal to installed version (for now)
+            self._previous_version = self.installed_version
+        self._previous_version = p_v
+        # if len(self.all_binary_versions) == 1:  # pasystray
+        #     logger.warning("only one version available {version}".format(version=self.installed_version))
+        #     sys.exit()
+        # logger.debug("picking previous version")
+        # try:
+        #     self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
+        # except Exception:
+        #     pass
+
 
     @property
     def target_version(self):
         return self._target_version
+
 
     @target_version.setter
     def target_version(self, version):
@@ -154,6 +182,7 @@ class PackageParser(object):
             self._target_version = self.all_binary_versions[self.all_binary_versions.index(version)]
         except ValueError:
             logger.error("not such package version {package}:{version}".format(package=self.package_name, version=version))
+
 
     @property
     def target_version_hash(self):
@@ -180,6 +209,7 @@ class PackageParser(object):
                             self._target_hash = j['hash']
                             return j['hash']
 
+
     @property
     def target_first_seen(self):
         logger.debug("quering first seen")
@@ -195,13 +225,14 @@ class PackageParser(object):
 
             #
 
+
     def __str__(self):
         return "Package name: " + self.package_name + ", Installed Version: " + self.installed_version + " Target Version: " + self.target_version + " Origin: " + self.origin + " Archive: " + self.archive  # p = PackageParse("rstudio")
 
 
 if __name__ == '__main__':
 
-    pack = 'spacefm'
+    pack = 'meshlab'
 
     if len(sys.argv) == 1:
         p = PackageParser(pack)
@@ -215,7 +246,10 @@ if __name__ == '__main__':
     import re
 
     print("\n")
-    logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)) + "\n")
+    try:
+        logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)) + "\n")
+    except AttributeError:
+        print "DOWN HERE"
     # for i, version in enumerate(p.all_binary_versions):
     #
     #     if not re.search('b[0-9]{1}$', version):
