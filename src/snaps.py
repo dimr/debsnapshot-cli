@@ -243,17 +243,20 @@ if __name__ == '__main__':
         # print p.target_version
         # print p.target_version_hash
         # print p.target_first_seen
+        print("\n")
         print p
         # for i in p.all_binary_versions:
         #     print i
-            # print p.latest
+        # print p.latest
     else:
         p = PackageParser(sys.argv[1], )
         print p.all_binary_versions
         for version in p.all_binary_versions:
             p.target_version = version
             logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
+        print("\n")
         print p
+    logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)))
     # print p.all_binary_versions
     # print p.installed_version
     # print p.previous_version
@@ -261,7 +264,6 @@ if __name__ == '__main__':
 
     print("\n")
     # try:
-    #     logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)) + "\n")
     #     for i in p.all_binary_versions:
     #         p.target_version=i
     #         logger.info(i)
