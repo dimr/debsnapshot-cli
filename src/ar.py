@@ -61,6 +61,11 @@ if args.source:
     print 'get SOURCE'
 elif args.downgrade:
     print "Downgrading...",args
+    p=PackageParser(args.package_name,onlyList=False)
+    p.target_version=p.previous_version
+    print(p.target_version,p.previous_version,p.installed_version)
+    print(p.target_version_hash,p.target_first_seen)
+
 elif args.target_version:
     print "TARGET",args
     package_name = args.package_name.split("==")[0]
