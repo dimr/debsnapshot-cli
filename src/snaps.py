@@ -27,20 +27,22 @@ INFO_HASH_URL = BASE_URL + "file/{hash}/info"
 
 
 class PackageParser(object):
-    def __init__(self, package_name, version=None):
+    def __init__(self, package_name, version=None, onlyList=True):
         # print args,type(args)
-        self.cache = apt.Cache()
         self.package_name = package_name
-        logger.debug('Picked:%s' % self.package_name)
-        try:
-            self.package = self.cache[package_name.strip().lower()]
-            self.package_name = self.package.name
-            self.package_full_name = self.package.fullname
-        except (KeyError, AttributeError):
-            # print "no Such package in cache: ", self.package_name
+        if not onlyList:
+            self.cache = apt.Cache()
+            self.package_name = package_name
+            logger.debug('Picked:%s' % self.package_name)
+            try:
+                self.package = self.cache[package_name.strip().lower()]
+                self.package_name = self.package.name
+                self.package_full_name = self.package.fullname
+            except (KeyError, AttributeError):
+                # print "no Such package in cache: ", self.package_name
 
-            logger.warning("no Such package in cache: {package}".format(package=self.package_name))
-            sys.exit()
+                logger.warning("no Such package in cache: {package}".format(package=self.package_name))
+                sys.exit()
         self.__join = lambda a, b: requests.compat.urljoin(a, b)
         self.response = None
         try:
@@ -63,35 +65,36 @@ class PackageParser(object):
             logger.warning(self.package_name + ' not installed from official debian repository')
             sys.exit()
             # self.__binary_versions = None
-        self._target_hash = ''
         self._all_binary_versions = [str(version['binary_version']) for version in self.response.json()['result']]
-        self._previous_version = None
-        try:
-            package_list_length = len(self.all_binary_versions)
-            if package_list_length != 1:
-                self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
-            elif package_list_length == 1:
-                logger.warning("Only one package available {package}".format(package=self.package_name))
-                self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version)]
-                # print(self.installed_version)
-                # print(self.previous_version)
-        except (ValueError, AttributeError) as e:
-            print "CANNOT"
-            print e
-        # print(self.system_arch)
-        # print(self.is_installed)
-        # print(self.is_latest)
-        self._target_version = None
-        # print(self.all_binary_versions)
-        # print(self.previous_version)
-        if version is None:
-            self.target_version = ''
+        if not onlyList:
+            self._target_hash = ''
+            self._previous_version = None
+            try:
+                package_list_length = len(self.all_binary_versions)
+                if package_list_length != 1:
+                    self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
+                elif package_list_length == 1:
+                    logger.warning("Only one package available {package}".format(package=self.package_name))
+                    self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version)]
+                    # print(self.installed_version)
+                    # print(self.previous_version)
+            except (ValueError, AttributeError) as e:
+                print "CANNOT"
+                print e
+            # print(self.system_arch)
+            # print(self.is_installed)
+            # print(self.is_latest)
+            self._target_version = None
+            # print(self.all_binary_versions)
+            # print(self.previous_version)
+            if version is None:
+                self.target_version = ''
 
     @property
     def system_arch(self):
         libc6_arch = self.cache['libc6'].architecture()
         if not self.is_installed:
-            #logger.warning("{package} is not installed, getting system arch from libc6".format(package=self.package.name))
+            # logger.warning("{package} is not installed, getting system arch from libc6".format(package=self.package.name))
             return libc6_arch
         arch = self.cache[self.package].architecture()
         assert (arch == libc6_arch), 'Problem with system architectures -> {package}={local_arch} , libc6={libc6_arch}'.format(package=self.package_name, local_arch=arch,
@@ -178,7 +181,7 @@ class PackageParser(object):
             print(self.previous_version)
             self._target_version = self.previous_version
         if version in self.all_binary_versions:
-            #logger.info('PACKAGE FOUND')
+            # logger.info('PACKAGE FOUND')
             try:
                 self._target_version = self.all_binary_versions[self.all_binary_versions.index(version)]
                 # logger.info("requests version {version}".format(version=version))
@@ -218,7 +221,7 @@ class PackageParser(object):
         r.close()
         if r.status_code == 404:
             logger.debug("it does not exists")
-            #sys.exit()
+            # sys.exit()
             return "404"
         if r:
             return r.json()['result'][0]['first_seen']
@@ -236,9 +239,9 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         p = PackageParser(pack)
         print p.all_binary_versions
-        for version in p.all_binary_versions:
-            p.target_version = version
-            logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
+        # for version in p.all_binary_versions:
+        #     p.target_version = version
+        #     logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
         # p.target_version = '1:6.4+7.0g01-1'
         # print p.target_version
         # print p.target_version_hash
@@ -251,12 +254,12 @@ if __name__ == '__main__':
     else:
         p = PackageParser(sys.argv[1], )
         print p.all_binary_versions
-        for version in p.all_binary_versions:
-            p.target_version = version
-            logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
+        # for version in p.all_binary_versions:
+        #     p.target_version = version
+        #     logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
         print("\n")
-        print p
-    logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)))
+        # print p
+    # logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)))
     # print p.all_binary_versions
     # print p.installed_version
     # print p.previous_version

@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 import sys, argparse
 import os
-
+from snaps import PackageParser
 
 #
 # parser = argparse.ArgumentParser(description="Debian snapshot sources utility program")
@@ -29,7 +28,7 @@ import os
 #         sn_list.write('########APPENDED FROM SNAPSHOT HELPER')
 
 
-#-----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 # print sys.argv
 # print os.geteuid()
 # snap = ' '.join([i for i in sys.argv[1:]])
@@ -42,28 +41,39 @@ import os
 #
 # os.system('apt-get -o Acquire::Check-Valid-Until=false update')
 # os.system('apt-cache policy {package}'.format(package))
-#-----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 
 #
 parser = argparse.ArgumentParser(description="find package in debian snapshot")
-parser.add_argument("package_name",help="write the package name you wish to find",type=str)
-#args = parser.parse_args()
+parser.add_argument("package_name", help="write the package name you wish to find", type=str)
+# args = parser.parse_args()
 
-#optional arguments
-parser.add_argument("--source","-s",help="get source package",action='store_true')
-parser.add_argument('--downgrade','-d',help="Downgrades to the previous version",action="store_true")
-parser.add_argument('--target-version','-t',help="Downgrades to the target version specified",action="store_true")
-parser.add_argument('--download-deb',help='Downloads deb',action='store_true')
+# optional arguments
+parser.add_argument('--downgrade', '-d', help="Downgrades to the previous version", action="store_true")
+parser.add_argument('--target-version', '-t', help="Downgrades to the target version specified", action="store_true")
+parser.add_argument('--all-versions', '-l', help='Lists all version from snapshot.debian.org', action="store_true")
+
+parser.add_argument('--download-deb', help='Downloads deb', action='store_true')
+parser.add_argument("--source", "-s", help="get source package", action='store_true')
 args = parser.parse_args()
 
-if  args.source:
+if args.source:
     print 'get SOURCE'
 elif args.downgrade:
-    print "Downgrading..."
+    print "Downgrading...",args
 elif args.target_version:
-    print "TARGET"
+    print "TARGET",args
+    package_name = args.package_name.split("==")[0]
+    version=args.package_name.split("==")[1]
+    p=PackageParser(package_name,onlyList=False)
+    p.target_version=version
+    print(p.target_version_hash,p.target_first_seen)
 elif args.download_deb:
     print 'Downloading deb'
+elif args.all_versions:
+    print "GEtting all versions", args
+    p = PackageParser(args.package_name)
+    print p.all_binary_versions
+    print "Number of packages:", len(p.all_binary_versions)
 else:
-    print 'you asked for binary package = ',args.package_name
-
+    print 'you asked for binary package = ', args.package_name
