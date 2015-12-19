@@ -1,6 +1,6 @@
 import sys, argparse
 import os
-from packageParser import PackageParser
+from packageParser   import PackageParser
 
 #
 # parser = argparse.ArgumentParser(description="Debian snapshot sources utility program")
