@@ -29,9 +29,10 @@ INFO_HASH_URL = BASE_URL + "file/{hash}/info"
 class PackageParser(object):
     def __init__(self, package_name, version=None, onlyList=True):
         # print args,type(args)
+        self.onlyList = onlyList
         self.package_name = package_name
+        self.cache = apt.Cache()
         if not onlyList:
-            self.cache = apt.Cache()
             self.package_name = package_name
             logger.debug('Picked:%s' % self.package_name)
             try:
@@ -93,7 +94,7 @@ class PackageParser(object):
     @property
     def system_arch(self):
         libc6_arch = self.cache['libc6'].architecture()
-        if not self.is_installed:
+        if self.onlyList:
             # logger.warning("{package} is not installed, getting system arch from libc6".format(package=self.package.name))
             return libc6_arch
         arch = self.cache[self.package].architecture()
