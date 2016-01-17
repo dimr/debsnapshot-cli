@@ -15,15 +15,46 @@ def handle_interrupt(func):
     return wrap()
 
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger("requests").setLevel(logging.CRITICAL)
-logger = logging.getLogger('__apt-snapshot__')
-# logger.propagate = False
-
 BASE_URL = 'http://snapshot.debian.org/mr/'
 BINARY_URL = BASE_URL + 'binary/{binary}/'
 ALL_FILES = BASE_URL + 'package/{binary}/{version}/allfiles'
 INFO_HASH_URL = BASE_URL + "file/{hash}/info"
+
+url_join = lambda a, b: requests.compat.urljoin(a, b)
+
+
+class SnapConnection(object):
+    def __init__(self, package, base_url=BASE_URL, *args, **kwargs):
+        self.package = package
+        self.url = url_join(base_url, url.format(binary=self.package))
+        print('------', self.url)
+
+    def __enter__(self):
+        self.response = requests.get(self.url)
+        # print('----------->', self.url, self.response.ok)
+        return self.response
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # print exc_type, exc_val, exc_tb
+        if isinstance(exc_val, requests.exceptions.MissingSchema):
+            return True
+        print('closing connection')
+        self.response.close()
+
+
+def get_request_from_snapshot(url, package, kwargs):
+    with SnapConnection(url, package) as response:
+        return response
+
+
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logger = logging.getLogger('__apt-snapshot__')
+
+
+# logger.propagate = False
+
+
 
 
 class PackageParser(object):
@@ -47,7 +78,8 @@ class PackageParser(object):
         self.__join = lambda a, b: requests.compat.urljoin(a, b)
         self.response = None
         try:
-            self.response = requests.get(self.__join(BASE_URL, BINARY_URL.format(binary=self.package_name)), timeout=(10, 10))
+             self.response = requests.get(self.__join(BASE_URL, BINARY_URL.format(binary=self.package_name)), timeout=(10, 10))
+            #self.response = get_request_from_snapshot(self.package_name, BINARY_URL)
         except requests.exceptions.ConnectTimeout as e:
             logger.warning('TIMED OUT')
             sys.exit()
@@ -194,7 +226,10 @@ class PackageParser(object):
         '''URL: /mr/package/<package>/<version>/allfiles
         '''
 
-        r = requests.get(self.__join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)))
+        # r = requests.get(self.__join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)))
+        print(url_join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)))
+        r = get_request_from_snapshot(url_join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)), self.package_name)
+        print r
         # try:
         # r.raise_for_status()
         # except requests.exceptions.HTTPError as e:
