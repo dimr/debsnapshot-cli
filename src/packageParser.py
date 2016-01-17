@@ -20,24 +20,31 @@ BINARY_URL = BASE_URL + 'binary/{binary}/'
 ALL_FILES = BASE_URL + 'package/{binary}/{version}/allfiles'
 INFO_HASH_URL = BASE_URL + "file/{hash}/info"
 
-url_join = lambda a, b: requests.compat.urljoin(a, b)
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logger = logging.getLogger('__apt-snapshot__')
+
+
+def url_join(a, b):
+    return requests.compat.urljoin(a, b)
 
 
 class SnapConnection(object):
     def __init__(self, url):
         self.url = url
-        #print('------', self.url)
+        # print('------', self.url)
 
     def __enter__(self):
         self.response = requests.get(self.url)
         # print('----------->', self.url, self.response.ok)
+        logger.debug('Requesting %s' % self.url)
         return self.response
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         # print exc_type, exc_val, exc_tb
         if isinstance(exc_val, requests.exceptions.MissingSchema):
             return True
-        print('closing connection')
+        logger.debug('Closing connection...')
         self.response.close()
 
 
@@ -46,23 +53,19 @@ def get_request_from_snapshot(url):
         return response
 
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger("requests").setLevel(logging.CRITICAL)
-logger = logging.getLogger('__apt-snapshot__')
-
-
 # logger.propagate = False
 
 
 
 
 class PackageParser(object):
-    def __init__(self, package_name, version=None, onlyList=True):
+    def __init__(self, package_name, version=None, onlyList=False, downgrade=False):
         # print args,type(args)
         self.onlyList = onlyList
         self.package_name = package_name
         self.cache = apt.Cache()
-        if not onlyList:
+        self.response = None
+        if not self.onlyList:
             self.package_name = package_name
             logger.debug('Picked:%s' % self.package_name)
             try:
@@ -74,32 +77,22 @@ class PackageParser(object):
 
                 logger.warning("no Such package in cache: {package}".format(package=self.package_name))
                 sys.exit()
-        self.__join = lambda a, b: requests.compat.urljoin(a, b)
-        self.response = None
-        temp_url = url_join(BASE_URL,BINARY_URL.format(binary=self.package_name))
-        try:
-             #self.response = requests.get(url, timeout=(10, 10))
-             self.response = get_request_from_snapshot(temp_url)
-        except requests.exceptions.ConnectTimeout as e:
-            logger.warning('TIMED OUT')
-            sys.exit()
-        except requests.exceptions.ConnectionError as e:
-            logger.warning("CONNECTION ERROR")
-            sys.exit()
-        # except requests.exceptions.RequestException as e:
-        # print "SDFSD"
-        # sys.exit()
-        logger.debug("initial request response status:%d" % self.response.status_code)
-        logger.debug("closing connection")
-        # print '--------',self.response.elapsed.total_seconds()
-
-        if not self.response:
-            # print self.response.status_code, "not installed from official debian repository"
-            logger.warning(self.package_name + ' not installed from official debian repository')
-            sys.exit()
-            # self.__binary_versions = None
+        # just list available packages
+        elif self.onlyList:
+            #self.response = None
+            temp_url = url_join(BASE_URL, BINARY_URL.format(binary=self.package_name))
+            try:
+                # self.response = requests.get(url, timeout=(10, 10))
+                self.response = get_request_from_snapshot(temp_url)
+            except requests.exceptions.ConnectTimeout as e:
+                logger.warning('TIMED OUT')
+                sys.exit()
+            except requests.exceptions.ConnectionError as e:
+                logger.warning("CONNECTION ERROR")
+                sys.exit()
         self._all_binary_versions = [str(version['binary_version']) for version in self.response.json()['result']]
-        if not onlyList:
+
+        if downgrade:
             self._target_hash = ''
             self._previous_version = None
             try:
@@ -114,12 +107,8 @@ class PackageParser(object):
             except (ValueError, AttributeError) as e:
                 print "CANNOT"
                 print e
-            # print(self.system_arch)
-            # print(self.is_installed)
-            # print(self.is_latest)
+
             self._target_version = None
-            # print(self.all_binary_versions)
-            # print(self.previous_version)
             if version is None:
                 self.target_version = ''
 
@@ -226,7 +215,7 @@ class PackageParser(object):
         '''URL: /mr/package/<package>/<version>/allfiles
         '''
         # r = requests.get(self.__join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)))
-        temp_url=url_join(BASE_URL,ALL_FILES.format(binary=self.package_name,version=self.target_version))
+        temp_url = url_join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version))
         r = get_request_from_snapshot(temp_url)
         # try:
         # r.raise_for_status()
@@ -250,11 +239,11 @@ class PackageParser(object):
     @property
     def target_first_seen(self):
         logger.debug("quering first seen")
-        temp_url=url_join(BASE_URL,INFO_HASH_URL.format(hash=self.target_version_hash))
-        #r = requests.get(self.__join(BASE_URL, INFO_HASH_URL.format(hash=self.target_version_hash)))
-        r=get_request_from_snapshot(temp_url);
-        logger.debug("closing connection status_code:{code}".format(code=r.status_code))
-        r.close()
+        temp_url = url_join(BASE_URL, INFO_HASH_URL.format(hash=self.target_version_hash))
+        # r = requests.get(self.__join(BASE_URL, INFO_HASH_URL.format(hash=self.target_version_hash)))
+        r = get_request_from_snapshot(temp_url);
+        # logger.debug("closing connection status_code:{code}".format(code=r.status_code))
+        # r.close()
         if r.status_code == 404:
             logger.debug("it does not exists")
             # sys.exit()

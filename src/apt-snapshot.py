@@ -61,7 +61,7 @@ if args.source:
     print 'get SOURCE'
 elif args.downgrade:
     print "Downgrading...", args
-    p = PackageParser(args.package_name, onlyList=False)
+    p = PackageParser(args.package_name, onlyList=False, downgrade=True)
     p.target_version = p.previous_version
     print(p.target_version, p.previous_version, p.installed_version)
     print(p.target_version_hash, p.target_first_seen)
@@ -77,7 +77,7 @@ elif args.download_deb:
     print 'Downloading deb'
 elif args.all_versions:
     print "GEtting all versions", args
-    p = PackageParser(args.package_name)
+    p = PackageParser(args.package_name,onlyList=True)
     print p.all_binary_versions
     print "Number of packages:", len(p.all_binary_versions)
 else:
