@@ -59,7 +59,7 @@ def get_request_from_snapshot(url):
 
 
 class PackageParser(object):
-    def __init__(self, package_name, version=None, onlyList=False, downgrade=False):
+    def __init__(self, package_name, version=None, onlyList=False, downgrade=False,target=False):
         # print args,type(args)
         self.onlyList = onlyList
         self.package_name = package_name
@@ -74,26 +74,33 @@ class PackageParser(object):
                 self.package = self.cache[package_name.strip().lower()]
                 self.package_name = self.package.name
                 self.package_full_name = self.package.fullname
+            # exceptions: mispelling of package name
             except KeyError as e:
                 logger.exception(e)
                 sys.exit()
             except AttributeError as e:
                 logger.exception(e)
                 sys.exit()
-            if not self.is_installed:
+
+
+            if not self.is_installed and not target:
                 logger.error('Package {package} is not installed,cannot downgrade. Use -t switch'.format(package=self.package_name))
                 sys.exit()
+            elif self.is_installed and target:
+                pass
 
             self.__request()
             self._target_hash = ''
             self._previous_version = None
-            package_list_length = len(self.all_binary_versions)
-            if package_list_length != 1:
+            try:
+                package_list_length = len(self.all_binary_versions)
+                if package_list_length != 1:
                     self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
-            elif package_list_length == 1:
+                elif package_list_length == 1:
                     logger.warning("Only one package available {package}".format(package=self.package_name))
                     self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version)]
-
+            except ValueError:
+                logger.critical("Something unexpected happened")
             self._target_version = None
             if version is None:
                 self.target_version = ''
