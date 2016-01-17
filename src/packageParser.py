@@ -24,10 +24,9 @@ url_join = lambda a, b: requests.compat.urljoin(a, b)
 
 
 class SnapConnection(object):
-    def __init__(self, package, base_url=BASE_URL, *args, **kwargs):
-        self.package = package
-        self.url = url_join(base_url, url.format(binary=self.package))
-        print('------', self.url)
+    def __init__(self, url):
+        self.url = url
+        #print('------', self.url)
 
     def __enter__(self):
         self.response = requests.get(self.url)
@@ -42,8 +41,8 @@ class SnapConnection(object):
         self.response.close()
 
 
-def get_request_from_snapshot(url, package, kwargs):
-    with SnapConnection(url, package) as response:
+def get_request_from_snapshot(url):
+    with SnapConnection(url) as response:
         return response
 
 
@@ -77,9 +76,10 @@ class PackageParser(object):
                 sys.exit()
         self.__join = lambda a, b: requests.compat.urljoin(a, b)
         self.response = None
+        temp_url = url_join(BASE_URL,BINARY_URL.format(binary=self.package_name))
         try:
-             self.response = requests.get(self.__join(BASE_URL, BINARY_URL.format(binary=self.package_name)), timeout=(10, 10))
-            #self.response = get_request_from_snapshot(self.package_name, BINARY_URL)
+             #self.response = requests.get(url, timeout=(10, 10))
+             self.response = get_request_from_snapshot(temp_url)
         except requests.exceptions.ConnectTimeout as e:
             logger.warning('TIMED OUT')
             sys.exit()
@@ -225,11 +225,9 @@ class PackageParser(object):
     def target_version_hash(self):
         '''URL: /mr/package/<package>/<version>/allfiles
         '''
-
         # r = requests.get(self.__join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)))
-        print(url_join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)))
-        r = get_request_from_snapshot(url_join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version)), self.package_name)
-        print r
+        temp_url=url_join(BASE_URL,ALL_FILES.format(binary=self.package_name,version=self.target_version))
+        r = get_request_from_snapshot(temp_url)
         # try:
         # r.raise_for_status()
         # except requests.exceptions.HTTPError as e:
@@ -252,7 +250,9 @@ class PackageParser(object):
     @property
     def target_first_seen(self):
         logger.debug("quering first seen")
-        r = requests.get(self.__join(BASE_URL, INFO_HASH_URL.format(hash=self.target_version_hash)))
+        temp_url=url_join(BASE_URL,INFO_HASH_URL.format(hash=self.target_version_hash))
+        #r = requests.get(self.__join(BASE_URL, INFO_HASH_URL.format(hash=self.target_version_hash)))
+        r=get_request_from_snapshot(temp_url);
         logger.debug("closing connection status_code:{code}".format(code=r.status_code))
         r.close()
         if r.status_code == 404:
