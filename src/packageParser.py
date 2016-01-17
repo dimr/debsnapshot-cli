@@ -63,54 +63,59 @@ class PackageParser(object):
         # print args,type(args)
         self.onlyList = onlyList
         self.package_name = package_name
-        self.cache = apt.Cache()
+
         self.response = None
-        if not self.onlyList:
-            self.package_name = package_name
-            logger.debug('Picked:%s' % self.package_name)
+        if self.onlyList:
+            self.__request()
+
+        if downgrade:
+            self.cache = apt.Cache()
             try:
                 self.package = self.cache[package_name.strip().lower()]
                 self.package_name = self.package.name
                 self.package_full_name = self.package.fullname
-            except (KeyError, AttributeError):
-                # print "no Such package in cache: ", self.package_name
+            except KeyError as e:
+                logger.exception(e)
+                sys.exit()
+            except AttributeError as e:
+                logger.exception(e)
+                sys.exit()
+            if not self.is_installed:
+                logger.error('Package {package} is not installed,cannot downgrade. Use -t switch'.format(package=self.package_name))
+                sys.exit()
 
-                logger.warning("no Such package in cache: {package}".format(package=self.package_name))
-                sys.exit()
-        # just list available packages
-        elif self.onlyList:
-            #self.response = None
-            temp_url = url_join(BASE_URL, BINARY_URL.format(binary=self.package_name))
-            try:
-                # self.response = requests.get(url, timeout=(10, 10))
-                self.response = get_request_from_snapshot(temp_url)
-            except requests.exceptions.ConnectTimeout as e:
-                logger.warning('TIMED OUT')
-                sys.exit()
-            except requests.exceptions.ConnectionError as e:
-                logger.warning("CONNECTION ERROR")
-                sys.exit()
-        self._all_binary_versions = [str(version['binary_version']) for version in self.response.json()['result']]
-
-        if downgrade:
+            self.__request()
             self._target_hash = ''
             self._previous_version = None
-            try:
-                package_list_length = len(self.all_binary_versions)
-                if package_list_length != 1:
+            package_list_length = len(self.all_binary_versions)
+            if package_list_length != 1:
                     self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version) + 1]
-                elif package_list_length == 1:
+            elif package_list_length == 1:
                     logger.warning("Only one package available {package}".format(package=self.package_name))
                     self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version)]
-                    # print(self.installed_version)
-                    # print(self.previous_version)
-            except (ValueError, AttributeError) as e:
-                print "CANNOT"
-                print e
 
             self._target_version = None
             if version is None:
                 self.target_version = ''
+
+    def __request(self):
+        '''
+        Requests the same url when either -l or -d option is passed, since downgrade will
+        both use the python-apt to get the current ***installed*** version and  try to find
+        the previous version in the list
+        :return:
+        '''
+        temp_url = url_join(BASE_URL, BINARY_URL.format(binary=self.package_name))
+        try:
+           # self.response = requests.get(url, timeout=(10, 10))
+            self.response = get_request_from_snapshot(temp_url)
+        except requests.exceptions.ConnectTimeout as e:
+            logger.warning('TIMED OUT')
+            sys.exit()
+        except requests.exceptions.ConnectionError as e:
+            logger.warning("CONNECTION ERROR")
+            sys.exit()
+        self._all_binary_versions = [str(version['binary_version']) for version in self.response.json()['result']]
 
     @property
     def system_arch(self):
@@ -161,7 +166,6 @@ class PackageParser(object):
     def is_latest(self):
         if self.is_installed:
             return True if apt.apt_pkg.version_compare(self.all_binary_versions[0], self.installed_version) == 0 else False
-        print("NOT INSTALLED")
         return False
 
     @property
