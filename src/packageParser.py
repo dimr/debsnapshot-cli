@@ -59,14 +59,20 @@ def get_request_from_snapshot(url):
 
 
 class PackageParser(object):
-    def __init__(self, package_name, version=None, onlyList=False, downgrade=False,target=False):
+    def __init__(self, package_name,  onlyList=False, downgrade=False, target=False):
         # print args,type(args)
         self.onlyList = onlyList
         self.package_name = package_name
+        self.dowgrade=downgrade
+        self.target=target
 
         self.response = None
         if self.onlyList:
-            self.__request()
+            try:
+                self.__request()
+            except ValueError:
+                logger.error("No such package in debian snapshot: {package}".format(package=self.package_name))
+                sys.exit()
 
         if downgrade:
             self.cache = apt.Cache()
@@ -81,7 +87,6 @@ class PackageParser(object):
             except AttributeError as e:
                 logger.exception(e)
                 sys.exit()
-
 
             if not self.is_installed and not target:
                 logger.error('Package {package} is not installed,cannot downgrade. Use -t switch'.format(package=self.package_name))
@@ -101,9 +106,8 @@ class PackageParser(object):
                     self._previous_version = self.all_binary_versions[self.all_binary_versions.index(self.installed_version)]
             except ValueError:
                 logger.critical("Something unexpected happened")
-            self._target_version = None
-            if version is None:
-                self.target_version = ''
+
+                self.__target_version = ''
 
     def __request(self):
         '''
@@ -114,7 +118,7 @@ class PackageParser(object):
         '''
         temp_url = url_join(BASE_URL, BINARY_URL.format(binary=self.package_name))
         try:
-           # self.response = requests.get(url, timeout=(10, 10))
+            # self.response = requests.get(url, timeout=(10, 10))
             self.response = get_request_from_snapshot(temp_url)
         except requests.exceptions.ConnectTimeout as e:
             logger.warning('TIMED OUT')
@@ -208,18 +212,32 @@ class PackageParser(object):
 
     @target_version.setter
     def target_version(self, version):
+        '''
+        this is where the package to be requested is set.
+        cases: i) if -d, target version = previous version
+        ii)if -t switch is set, target_version= version passed by the user
+        :param version:package version
+        :return:
+        '''
         loc_version = None
-        if version == '':
+
+        #case i) downgrade option
+        if self.dowgrade and not self.target:
             logger.error("Have not set target version yet\n Settings target version = previous version")
-            print(self.previous_version)
             self._target_version = self.previous_version
-        if version in self.all_binary_versions:
-            # logger.info('PACKAGE FOUND')
-            try:
-                self._target_version = self.all_binary_versions[self.all_binary_versions.index(version)]
-                # logger.info("requests version {version}".format(version=version))
-            except ValueError:
-                logger.error("not such package version {package}:{version}".format(package=self.package_name, version=version))
+            logger.debug("Downgrade option.current version:{current}, previous version: {previous}".format(current=self.installed_version,previous=self.previous_version))
+        self._target_version = version
+        if self.target and self.dowgrade:
+            if self._target_version in self.all_binary_versions:
+                logger.info('PACKAGE FOUND %s' % version)
+                try:
+                    self._target_version = self.all_binary_versions[self.all_binary_versions.index(version)]
+                    # logger.info("requests version {version}".format(version=version))
+                except ValueError:
+                    logger.error("not such package version {package}:{version}".format(package=self.package_name, version=version))
+            else:
+                print("PACKAGE VERSION:  NOT FOUND " , self._target_version)
+                sys.exit()
 
     @property
     def target_version_hash(self):

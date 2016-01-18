@@ -70,8 +70,9 @@ elif args.target_version:
     print "TARGET", args
     package_name = args.package_name.split("==")[0]
     version = args.package_name.split("==")[1]
-    p = PackageParser(package_name, onlyList=True,downgrade=True,target=True)
+    p = PackageParser(package_name, onlyList=False,downgrade=True,target=True)
     p.target_version = version
+    print("ASKED:",version )
     print(p.target_version_hash, p.target_first_seen)
 elif args.download_deb:
     print 'Downloading deb'
