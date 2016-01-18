@@ -59,12 +59,12 @@ def get_request_from_snapshot(url):
 
 
 class PackageParser(object):
-    def __init__(self, package_name,  onlyList=False, downgrade=False, target=False):
+    def __init__(self, package_name, onlyList=False, downgrade=False, target=False):
         # print args,type(args)
         self.onlyList = onlyList
         self.package_name = package_name
-        self.dowgrade=downgrade
-        self.target=target
+        self.dowgrade = downgrade
+        self.target = target
 
         self.response = None
         if self.onlyList:
@@ -221,11 +221,13 @@ class PackageParser(object):
         '''
         loc_version = None
 
-        #case i) downgrade option
+        # case i) downgrade option
         if self.dowgrade and not self.target:
             logger.error("Have not set target version yet\n Settings target version = previous version")
             self._target_version = self.previous_version
-            logger.debug("Downgrade option.current version:{current}, previous version: {previous}".format(current=self.installed_version,previous=self.previous_version))
+            logger.debug("Downgrade option.current version:{current}, previous version: {previous}".format(current=self.installed_version, previous=self.previous_version))
+
+        # -t option where selection version is provided
         self._target_version = version
         if self.target and self.dowgrade:
             if self._target_version in self.all_binary_versions:
@@ -236,7 +238,7 @@ class PackageParser(object):
                 except ValueError:
                     logger.error("not such package version {package}:{version}".format(package=self.package_name, version=version))
             else:
-                print("PACKAGE VERSION:  NOT FOUND " , self._target_version)
+                logger.error("Package {package} version {version} does not exit".format(package=self.package_name, version=self._target_version))
                 sys.exit()
 
     @property
@@ -284,87 +286,3 @@ class PackageParser(object):
         return "Package name: " + self.package_name + ", Installed Version: " + str(self.installed_version) \
                + " is Latest: " + str(self.is_latest) + " Previous Version: " + str(self.previous_version) + \
                " Target Version: " + str(self.target_version) + " First seen: " + str(self.target_first_seen)
-
-
-if __name__ == '__main__':
-
-    pack = 'meshlab'
-
-    if len(sys.argv) == 1:
-        p = PackageParser(pack)
-        print p.all_binary_versions
-        # for version in p.all_binary_versions:
-        #     p.target_version = version
-        #     logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
-        # p.target_version = '1:6.4+7.0g01-1'
-        # print p.target_version
-        # print p.target_version_hash
-        # print p.target_first_seen
-        print("\n")
-        print p
-        # for i in p.all_binary_versions:
-        #     print i
-        # print p.latest
-    else:
-        p = PackageParser(sys.argv[1], )
-        print p.all_binary_versions
-        # for version in p.all_binary_versions:
-        #     p.target_version = version
-        #     logger.info(p.target_version + " " + str(p.target_first_seen) + " " + str(p.target_version_hash))
-        print("\n")
-        # print p
-    # logger.info("Number of packages {number}:".format(number=len(p.all_binary_versions)))
-    # print p.all_binary_versions
-    # print p.installed_version
-    # print p.previous_version
-    import re
-
-    print("\n")
-    # try:
-    #     for i in p.all_binary_versions:
-    #         p.target_version=i
-    #         logger.info(i)
-    #         # for i, version in enumerate(p.all_binary_versions):
-    #         #
-    #         #     logger.info(str(i) + " " + version + " " +version.target_first_seen)
-    #         #     #
-    #         # if not re.search('b[0-9]{1}$', version):
-    #         #     p.target_version = version
-    #         #     # logger.debug(i,version, p.target_version_hash,p.target_first_seen)#
-    #         #     logger.info(" " + str(i) + "  " + str(version) + " " + str(p._target_hash) + " " + str(p.target_first_seen))
-    #         # else:
-    #         #     logger.warning(" " + str(i) + " " + str(version) + " " + str(version))
-    #
-    #
-    #
-    # except AttributeError:
-    #     # p.target_version='2.20-3'
-    #     # print p.target_version_hash
-    #     # print p.target_first_seen
-    #     #
-    #
-    #
-    #     # print p.all_binary_versions
-    #     # print p.previous_version
-    #     # print p.latest, p.origin
-    #     # p.target_version = p.previous_version
-    #     # print p, p.target_hash, p.target_first_seen
-    #     # print p.target_hash, p.target_first_seen,datetime.strptime(p.target_first_seen, "%Y%m%dT%H%M%SZ")
-    #     # print datetime.strptime(p.target_first_seen, "%Y%m%dT%H%M%SZ")
-    #     #
-    #     # data=[]
-    #     # f=open('desktop.txt','r')
-    #     # the_line=f.readline()
-    #     # while the_line!='':
-    #     # data.append(the_line.split(' ')[2][:-1])
-    #     # the_line=f.readline()
-    #     #
-    #     # #print data[0].split(' ')[2]
-    #     # for i in data:
-    #     #
-    #     # p=PackageParser(i)
-    #     # p.target_version = p.previous_version
-    #     # print i,p.target_first_seen
-    #
-    #     # failed: ipython(all),terminator(all),gpick(?),gthumb
-    #     print "DOWN HERE"
