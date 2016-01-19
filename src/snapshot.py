@@ -73,7 +73,26 @@ class SnapshotRequest(object):
         response = self.session_get(url)
         return response.json()
 
-    def list_all_files_associated_with_this_source_package_at_that_version(self, version):
+    def target_version_hash(self, r, version, arch=None):
+        '''URL: /mr/package/<package>/<version>/allfiles
+        '''
+        # r = requests.get(self.__join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version))
+        target_hash = ''
+        if arch == None:
+            print 'getting ALL'
+            return
+        if r:
+            for i in r.json()['result']['binaries']:
+                if i['name'] == self.package_name and i['version'] == version:
+                    for j in i['files']:
+                        if j['architecture'] == arch:
+                            target_hash = j['hash']
+                            return j['hash']
+                        elif j['architecture'] == 'all':
+                            target_hash = j['hash']
+                            return j['hash']
+
+    def list_all_files_associated_with_this_source_package_at_that_version(self, version, arch=None):
         """
         URL: /mr/package/<package>/<version>/allfiles
         Options: fileinfo=1  includes fileinfo section
@@ -84,7 +103,8 @@ class SnapshotRequest(object):
         """
         url = url_join(BASE_URL, '/mr/package/{package}/{version}/allfiles'.format(package=self.package_name, version=version))
         response = self.session_get(url)
-        return response.json()
+        print '--------', self.target_version_hash(response, version, arch)
+        return response.json()['result']
 
     def find_binary_package_versions_and_corresponding_source_names_and_versions(self, binary):
         """
