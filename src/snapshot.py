@@ -10,7 +10,7 @@ def get_all_packages():
 
 
 class SnapshotRequest(object):
-    def __init__(self, package_name):
+    def __init__(self, package_name, architecture=None):
         self.package_name = package_name
         self.session = requests.Session()
 
@@ -43,7 +43,7 @@ class SnapshotRequest(object):
         """
         url = url_join(BASE_URL, 'mr/package/{package}/{version}/srcfiles'.format(package=self.package_name, version=version))
         response = self.session_get(url)
-        return [h['hash'] for h in response.json()['result']]
+        return [str(h['hash']) for h in response.json()['result']]
 
     def list_all_binary_packages_for_this_package_at_version(self, version):
         """
@@ -94,19 +94,17 @@ class SnapshotRequest(object):
         :param binary: binary package name
         :return:
         """
-        url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=binary))
+        url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=self.package_name))
         response = self.session_get(url)
-        return response.json()
+        return [str(b_version['binary_version']) for b_version in response.json()['result']]
 
-    def info_from_hash(self,the_hash):
+    def info_from_hash(self, the_hash):
         """
         URL: /mr/file/<hash>/info
         http status codes: 200 500 404 304
         :param hash:
         :return:
         """
-        url = url_join(BASE_URL,'/mr/file/{the_hash}/info'.format(the_hash=the_hash))
-        response=self.session_get(url)
+        url = url_join(BASE_URL, '/mr/file/{the_hash}/info'.format(the_hash=the_hash))
+        response = self.session_get(url)
         return response.json()
-
-
