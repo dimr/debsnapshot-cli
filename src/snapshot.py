@@ -77,7 +77,6 @@ class SnapshotRequest(object):
         '''URL: /mr/package/<package>/<version>/allfiles
         '''
         # r = requests.get(self.__join(BASE_URL, ALL_FILES.format(binary=self.package_name, version=self.target_version))
-        target_hash = ''
         if arch == None:
             print 'getting ALL'
             return
@@ -86,10 +85,8 @@ class SnapshotRequest(object):
                 if i['name'] == self.package_name and i['version'] == version:
                     for j in i['files']:
                         if j['architecture'] == arch:
-                            target_hash = j['hash']
                             return j['hash']
                         elif j['architecture'] == 'all':
-                            target_hash = j['hash']
                             return j['hash']
 
     def list_all_files_associated_with_this_source_package_at_that_version(self, version, arch=None):
