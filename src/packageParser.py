@@ -36,6 +36,7 @@ class SnapConnection(object):
 
     def __enter__(self):
         self.response = requests.get(self.url)
+        self.response.raise_for_status()
         # print('----------->', self.url, self.response.ok)
         logger.debug('Requesting %s' % self.url)
         return self.response
@@ -63,7 +64,7 @@ class PackageParser(object):
         # print args,type(args)
         self.onlyList = onlyList
         self.package_name = package_name
-        self.dowgrade = downgrade
+        self.donwgrade = downgrade
         self.target = target
 
         self.response = None
@@ -88,6 +89,7 @@ class PackageParser(object):
                 logger.exception(e)
                 sys.exit()
 
+            #case with -d option and package is not installed -> package not in cache
             if not self.is_installed and not target:
                 logger.error('Package {package} is not installed,cannot downgrade. Use -t switch'.format(package=self.package_name))
                 sys.exit()
@@ -110,12 +112,12 @@ class PackageParser(object):
                 self.__target_version = ''
 
     def __request(self):
-        '''
+        """
         Requests the same url when either -l or -d option is passed, since downgrade will
         both use the python-apt to get the current ***installed*** version and  try to find
         the previous version in the list
         :return:
-        '''
+        """
         temp_url = url_join(BASE_URL, BINARY_URL.format(binary=self.package_name))
         try:
             # self.response = requests.get(url, timeout=(10, 10))
@@ -150,7 +152,6 @@ class PackageParser(object):
         :return:
         '''
         if not self.is_installed:
-            # print "NO INSTALLED"
             logger.warning("Package {package} is not installed".format(package=self.package_name))
             return None
         return self.package.installed.version
@@ -222,14 +223,14 @@ class PackageParser(object):
         loc_version = None
 
         # case i) downgrade option
-        if self.dowgrade and not self.target:
-            logger.error("Have not set target version yet\n Settings target version = previous version")
+        if self.donwgrade and not self.target:
+            logger.debug("Have not set target version yet\n Settings target version = previous version")
             self._target_version = self.previous_version
             logger.debug("Downgrade option.current version:{current}, previous version: {previous}".format(current=self.installed_version, previous=self.previous_version))
 
         # -t option where selection version is provided
         self._target_version = version
-        if self.target and self.dowgrade:
+        if self.target and self.donwgrade:
             if self._target_version in self.all_binary_versions:
                 logger.info('PACKAGE FOUND %s' % version)
                 try:
