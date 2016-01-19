@@ -100,7 +100,7 @@ class SnapshotRequest(object):
         """
         url = url_join(BASE_URL, '/mr/package/{package}/{version}/allfiles'.format(package=self.package_name, version=version))
         response = self.session_get(url)
-        print '--------', self.target_version_hash(response, version, arch)
+        # print '--------', self.target_version_hash(response, version, arch)
         return response.json()['result']
 
     def find_binary_package_versions_and_corresponding_source_names_and_versions(self, binary):
@@ -115,13 +115,18 @@ class SnapshotRequest(object):
         response = self.session_get(url)
         return [str(b_version['binary_version']) for b_version in response.json()['result']]
 
-    def info_from_hash(self, the_hash):
+    def info_from_hash(self, version, arch=None):
         """
         URL: /mr/file/<hash>/info
         http status codes: 200 500 404 304
         :param hash:
         :return:
         """
+        url = url_join(BASE_URL, '/mr/package/{package}/{version}/allfiles'.format(package=self.package_name, version=version))
+        response = self.session_get(url)
+        the_hash = self.target_version_hash(response, version, arch)
+        print '--------', the_hash
+        #############################################################
         url = url_join(BASE_URL, '/mr/file/{the_hash}/info'.format(the_hash=the_hash))
         response = self.session_get(url)
         return response.json()
