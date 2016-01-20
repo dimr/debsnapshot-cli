@@ -14,13 +14,9 @@ class SnapshotRequest(object):
         self.package_name = package_name
         self.session = requests.Session()
 
-    def session_get(self, url):
-        response = self.session.get(url)
-        response.raise_for_status()
-        return response
-
-    def close(self):
-        self.session.close()
+    def snapshot_get(self, url):
+        with SnapConnection(url) as response:
+            return response
 
     def list_all_available_source_versions(self):
         """
@@ -29,7 +25,7 @@ class SnapshotRequest(object):
         summary: list all available source versions for this package
         :return: list
         """
-        response = self.session_get(url_join(BASE_URL, '/mr/package/{package}/'.format(package=self.package_name)))
+        response = self.snapshot_get(url_join(BASE_URL, '/mr/package/{package}/'.format(package=self.package_name)))
         return [str(version['version']) for version in response.json()['result']]
 
     def list_all_sources_for_this_package_at_version(self, version):
@@ -42,7 +38,7 @@ class SnapshotRequest(object):
         :return: list of hashes
         """
         url = url_join(BASE_URL, 'mr/package/{package}/{version}/srcfiles'.format(package=self.package_name, version=version))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         return [str(h['hash']) for h in response.json()['result']]
 
     def list_all_binary_packages_for_this_package_at_version(self, version):
@@ -54,7 +50,7 @@ class SnapshotRequest(object):
         :return: **temporary** return dict
         """
         url = url_join(BASE_URL, 'mr/package/{package}/{version}/binpackages'.format(package=self.package_name, version=version))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         return response.json()['result']
 
     def list_all_files_associated_with_a_binary_package(self, version, binpkg, binversion):
@@ -70,7 +66,7 @@ class SnapshotRequest(object):
         """
         url = url_join(BASE_URL,
                        '/mr/package/{package}/{version}/binfiles/{binpkg}/{binversion}'.format(package=self.package_name, version=version, binpkg=binpkg, binversion=binversion))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         return response.json()
 
     def target_version_hash(self, r, version, arch=None):
@@ -99,7 +95,7 @@ class SnapshotRequest(object):
         :return:
         """
         url = url_join(BASE_URL, '/mr/package/{package}/{version}/allfiles'.format(package=self.package_name, version=version))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         # print '--------', self.target_version_hash(response, version, arch)
         return response.json()['result']
 
@@ -112,7 +108,7 @@ class SnapshotRequest(object):
         :return:
         """
         url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=self.package_name))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         return [str(b_version['binary_version']) for b_version in response.json()['result']]
 
     def info_from_hash(self, version, arch=None):
@@ -123,10 +119,10 @@ class SnapshotRequest(object):
         :return:
         """
         url = url_join(BASE_URL, '/mr/package/{package}/{version}/allfiles'.format(package=self.package_name, version=version))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         the_hash = self.target_version_hash(response, version, arch)
         print '--------', the_hash
         #############################################################
         url = url_join(BASE_URL, '/mr/file/{the_hash}/info'.format(the_hash=the_hash))
-        response = self.session_get(url)
+        response = self.snapshot_get(url)
         return response.json()

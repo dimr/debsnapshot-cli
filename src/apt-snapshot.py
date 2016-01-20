@@ -22,22 +22,24 @@ args = parser.parse_args()
 the_hash = ''
 arch = ''
 if args.all_source_versions:
+    #python apt-snapshot.py -ls spacefm
     package = SnapshotRequest(args.package_name)
     print package.list_all_available_source_versions()
 elif args.all_source_for_package_version:
+    #python apt-snapshot.py -alls 0.9.4-2 spacefm
     package = SnapshotRequest(args.package_name)
     # package.list_all_sources_for_this_package_at_version()
     version = getattr(args, 'all_source_for_package_version')
-    package.close()
     print package.list_all_sources_for_this_package_at_version(version)
 elif args.all_binpackages_for_package_version:
+    #python apt-snapshot.py -alb 0.9.4-2 spacefm
     print(args)
     package = SnapshotRequest(args.package_name)
-    package.close()
     version = getattr(args, 'all_binpackages_for_package_version')
     print package.list_all_binary_packages_for_this_package_at_version(version)
 elif args.all_files:
-    print args
+    #apt-snapshot.py spacefm -af  0.9.4-2 amd64
+    print args,"PRLBMEADS"
     package = SnapshotRequest(args.package_name)
     num_parameters = len(getattr(args, 'all_files'))
     version = getattr(args, 'all_files')[0]
@@ -48,6 +50,7 @@ elif args.all_files:
     print package.list_all_files_associated_with_this_source_package_at_that_version(version, arch)
     print getattr(args, 'all_files')[1]
 elif args.info:
+    #python apt-snapshot.py python-apt --info 0.7.8 amd64
     print args
     package = SnapshotRequest(args.package_name)
     num_parameters = len(getattr(args, 'info'))
@@ -60,8 +63,8 @@ elif args.info:
     print package.info_from_hash(version, arch)
 
 else:
+    #python apt-snapshot.py -l spacefm
     package = SnapshotRequest(args.package_name)
     print args.package_name
     print package.find_binary_package_versions_and_corresponding_source_names_and_versions(package)
-    package.close()
     print 'OK'
