@@ -1,12 +1,15 @@
 import requests
 import logging
 
-
 BASE_URL = 'http://snapshot.debian.org/'
-ALL_PACKAGES = BASE_URL+'mr/package/'
+ALL_PACKAGES = BASE_URL + 'mr/package/'
 BINARY_URL = BASE_URL + 'binary/{binary}/'
 ALL_FILES = BASE_URL + 'package/{binary}/{version}/allfiles'
 INFO_HASH_URL = BASE_URL + "file/{hash}/info"
+
+DEBIAN_PORTS = ['amd64', 'armel', 'armhf', 'i386', 'ia64', 'kfreebsd-amd64', 'kfreebsd-i386', 'mips', 'mipsel',
+                'powerpc', 'ppc64el',
+                's390', 'sparc']
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.CRITICAL)
@@ -37,6 +40,12 @@ class SnapConnection(object):
         self.response.close()
 
 
-def get_request_from_snapshot(url):
+def snapshot_get(url):
     with SnapConnection(url) as response:
         return response
+
+
+def check_port(architecture):
+    if architecture in DEBIAN_PORTS:
+        return architecture
+    raise ValueError('No such debian port : {port}'.format(port=architecture))
