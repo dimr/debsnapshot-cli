@@ -14,7 +14,8 @@ class SnapshotRequest(object):
         self.package_name = package_name
         self.session = requests.Session()
 
-    def snapshot_get(self, url):
+    @staticmethod
+    def snapshot_get( url):
         with SnapConnection(url) as response:
             return response
 
