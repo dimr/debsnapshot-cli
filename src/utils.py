@@ -1,5 +1,6 @@
 import requests
 import logging
+import sys
 
 BASE_URL = 'http://snapshot.debian.org/'
 ALL_PACKAGES = BASE_URL + 'mr/package/'
@@ -26,7 +27,13 @@ class SnapConnection(object):
         # print('------', self.url)
 
     def __enter__(self):
-        self.response = requests.get(self.url)
+        try:
+            self.response = requests.get(self.url)
+        except KeyboardInterrupt:
+            logger.debug("\nBye")
+        except requests.exceptions.ConnectionError:
+            logger.error("Not internet connection")
+            sys.exit()
         self.response.raise_for_status()
         # print('----------->', self.url, self.response.ok)
         logger.debug('Requesting %s' % self.url)

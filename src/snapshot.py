@@ -2,7 +2,7 @@ from utils import SnapConnection
 from utils import url_join,snapshot_get
 from utils import BASE_URL, ALL_PACKAGES
 import requests
-
+import tabulate
 
 def get_all_packages():
     with SnapConnection(url_join(BASE_URL, ALL_PACKAGES)) as response:
@@ -37,7 +37,8 @@ class SnapshotRequest(object):
         """
         url = url_join(BASE_URL, 'mr/package/{package}/{version}/srcfiles'.format(package=self.package_name, version=version))
         response = snapshot_get(url)
-        return [str(h['hash']) for h in response.json()['result']]
+        #return [str(h['hash']) for h in response.json()['result']]
+        return response.json()
 
     def list_all_binary_packages_for_this_package_at_version(self, version):
         """
@@ -107,8 +108,8 @@ class SnapshotRequest(object):
         """
         url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=self.package_name))
         response = snapshot_get(url)
-        return [str(b_version['binary_version']) for b_version in response.json()['result']]
-
+        #return [str(b_version['binary_version']) for b_version in response.json()['result']]
+        return response.json()
     def info_from_hash(self, version, arch=None):
         """
         URL: /mr/file/<hash>/info
