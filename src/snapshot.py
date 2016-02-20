@@ -19,11 +19,20 @@ class SnapshotRequest(object):
         #  logger = logging.getLogger(self.__class__.__name__)
         self.package_name = package_name
         # # self.session = requests.Session()
-        r = self.find_binary_package_versions_and_corresponding_source_names_and_versions(self.package_name)
-        self.source_name = r['result'][0]['source']
-        self.binary_name = r['result'][0]['name']
+        url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=self.package_name))
+        self.initial_response = snapshot_get(url).json()
+        #self.initial_response = self.find_binary_package_versions_and_corresponding_source_names_and_versions(self.package_name)
+        self.source_name = self.initial_response['result'][0]['source']
+        self.binary_name = self.initial_response['result'][0]['name']
         self.loggerA.debug('\nsource_name:{s},\nbinary_name:{b}\npackage_name:{p}\n'.format(s=self.source_name, b=self.binary_name,p=self.package_name))
         #assert r['result'][0]['name'] == r['result'][0]['source'], 'NOT THE SAME \nsource_name:{s},\nbinary_name:{b}\npackage_name:{p}'.format(s=self.source_name, b=self.binary_name,p=self.package_name)
+
+
+    def general_info(self):
+        l=[i['source'] for i in self.initial_response['result']]
+        print 'Source name(s): ',list(set([str(i['source']) for i in self.initial_response['result']]))
+        print 'Binary name: ',list(set([i['name'] for i in self.initial_response['result']]))
+        print len(l)
 
     def list_all_available_source_versions(self):
         """
@@ -142,11 +151,12 @@ class SnapshotRequest(object):
         :param binary: binary package name
         :return:
         """
-        url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=self.package_name))
-        response = snapshot_get(url)
+        # url = url_join(BASE_URL, '/mr/binary/{binary}/'.format(binary=self.package_name))
+        # response = snapshot_get(url)
         # assert response.json()['result'][0]['name']==response.json()['result'][0]['source']
         # return [str(b_version['binary_version']) for b_version in response.json()['result']]
-        return response.json()
+        #return response.json()
+        return self.initial_response
 
     def info_from_hash(self, version, arch=None):
         """
@@ -167,3 +177,9 @@ class SnapshotRequest(object):
         url = url_join(BASE_URL, '/mr/file/{the_hash}/info'.format(the_hash=the_hash))
         response = snapshot_get(url)
         return response.json()
+
+#
+# def main():
+#     p=SnapshotRequest('virtualbox')
+#     p.general_info()
+# main()
