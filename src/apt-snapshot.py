@@ -101,3 +101,7 @@ else:
     print tabulate(result['result'], tablefmt='grid', headers='keys')  # , tablefmt='simple')
     # print [str(i) for i in result]
     print '\nNumber of packages: %d' % len(result['result'])
+
+
+    #br2684ctl ,make, xserver-xorg-input-wacom source names change
+    #apt-get -o  Dir::Etc::sourcelist="sources.list.d/snapshot.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"  -o Acquire::Check-Valid-Until=false update
