@@ -30,9 +30,12 @@ class SnapshotRequest(object):
 
     def general_info(self):
         l=[i['source'] for i in self.initial_response['result']]
+        result={}
+        result['Source name(s)']=list(set([str(i['source']) for i in self.initial_response['result']]))
+        result['Binary name']=list(set([i['name'] for i in self.initial_response['result']]))
         print 'Source name(s): ',list(set([str(i['source']) for i in self.initial_response['result']]))
         print 'Binary name: ',list(set([i['name'] for i in self.initial_response['result']]))
-        print len(l)
+        return result
 
     def list_all_available_source_versions(self):
         """
