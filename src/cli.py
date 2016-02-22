@@ -1,14 +1,32 @@
 from __future__ import print_function
 import argparse
 from snapshot import SnapshotRequest, get_all_packages
-import pprint
 from utils import logger, check_port
 from tabulate import tabulate
 import sys
+import os
+
+SNAPSHOT_URL = 'deb http://snapshot.debian.org/archive/debian/{time_stamp} unstable main'
+SOURCES_PATH = '/etc/apt/sources.list.d/'
+SNAPSHOT_FILE = 'snapshot.list'
+
+
+def check(time_stamp, package=None, version=None):
+    folder_ok = os.path.exists(SOURCES_PATH) and os.path.isdir(SOURCES_PATH)
+    if not folder_ok:
+        print("Path does not exists")
+    file_ok = os.path.exists(SOURCES_PATH + SNAPSHOT_FILE) and os.path.isfile(SOURCES_PATH + SNAPSHOT_FILE)
+    # root=0 non_root=1000
+    normal_user = True if os.geteuid() is not 0 else False
+    if file_ok and normal_user:
+        os.system('su -c "python snapshot_file_handler.py append {time_stamp} {package} {version}"'.format(time_stamp=time_stamp, package=package, version=version))
+    elif not file_ok and normal_user:
+        os.system('su -c "python snapshot_file_handler.py write {time_stamp} {package} {version}"'.format(time_stamp=time_stamp, package=package, version=version))
+    elif not normal_user:
+        print("you should not run this script as ROOT")
 
 
 def main(args=None):
-
     parser = argparse.ArgumentParser(description="find package information in debian.snapshot.org")
 
     # parser.add_argument('architecture', nargs='?', type=str, default=None, help='set the target version of the package you wish you')
@@ -68,6 +86,18 @@ def main(args=None):
         print('\n')
         print(tabulate(result['result'], headers='keys'))
         print('\n')
+        time_stamp = result['result'][0]['first_seen']
+        print('URL: ' + SNAPSHOT_URL.format(time_stamp=time_stamp))
+        print('\n')
+        print("Append this URL to /etc/apt/sources.list.d/snapshot.list?")
+        proceed = raw_input("do you want to continue [y/n]:")
+        ans = proceed.strip().lower()
+        if ans == 'y':
+            print("Please enter your ROOT password:")
+            check(time_stamp, package=args.package_name, version=args.version[0])
+        elif ans == 'n':
+            print('\nBye!')
+            sys.exit()
     else:
         package = SnapshotRequest(args.package_name)
         result = package.general_info()
