@@ -7,9 +7,7 @@ from tabulate import tabulate
 import sys
 
 
-def main(args=None, stdin=None):
-    if stdin is None:
-        stdin = sys.stdin
+def main(args=None):
 
     parser = argparse.ArgumentParser(description="find package information in debian.snapshot.org")
 
@@ -72,11 +70,10 @@ def main(args=None, stdin=None):
         print('\n')
     else:
         package = SnapshotRequest(args.package_name)
-        print(args.package_name)
         result = package.general_info()
         print(tabulate(result, tablefmt='grid', headers='keys'))  # , tablefmt='simple'))
 
-    return args
+    return 0
 
 
 if __name__ == '__main__':
