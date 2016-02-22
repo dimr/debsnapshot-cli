@@ -12,6 +12,7 @@ SNAPSHOT_FILE = 'snapshot.list'
 
 
 def check(time_stamp, package=None, version=None):
+    script_name = "snapshot_file_handler.py"
     folder_ok = os.path.exists(SOURCES_PATH) and os.path.isdir(SOURCES_PATH)
     if not folder_ok:
         print("Path does not exists")
@@ -19,9 +20,11 @@ def check(time_stamp, package=None, version=None):
     # root=0 non_root=1000
     normal_user = True if os.geteuid() is not 0 else False
     if file_ok and normal_user:
-        os.system('su -c "python snapshot_file_handler.py append {time_stamp} {package} {version}"'.format(time_stamp=time_stamp, package=package, version=version))
+        os.system('su -c "python {script} append {time_stamp} {package} {version}"'.format(script=os.path.join(os.path.dirname(__file__), script_name), time_stamp=time_stamp,
+                                                                                           package=package, version=version))
     elif not file_ok and normal_user:
-        os.system('su -c "python snapshot_file_handler.py write {time_stamp} {package} {version}"'.format(time_stamp=time_stamp, package=package, version=version))
+        os.system('su -c "python {script} write {time_stamp} {package} {version}"'.format(script=os.path.join(os.path.dirname(__file__), script_name), time_stamp=time_stamp,
+                                                                                          package=package, version=version))
     elif not normal_user:
         print("you should not run this script as ROOT")
 
