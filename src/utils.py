@@ -12,7 +12,7 @@ DEBIAN_PORTS = ['amd64', 'armel', 'armhf', 'i386', 'ia64', 'kfreebsd-amd64', 'kf
                 'powerpc', 'ppc64el',
                 's390', 'sparc']
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.CRITICAL)
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logger = logging.getLogger('__apt-snapshot__')
 
