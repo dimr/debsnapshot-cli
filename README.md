@@ -4,6 +4,8 @@ python program to get package information from http://snapshot.debian.org/
 Get package information from the snapshot.debian.org ex. source versions,binary versions and most important ```first_seen``` 
 entry in order to install/downgrade that is no longer in the official {stable,testing,unstable} repositories by adding 
 ```deb http://snapshot.debian.org/archive/debian/first_seen unstable main contrib non-free```
+and append the url to /etc/apt/sources.list.d/snapshot.list file
+
 ```
 $ debsnapshot-cli -h 
 usage: debsnapshot-cli [-h] [-v VERSION] [-lb] [-ls] [-lbins] [-i]
@@ -31,7 +33,7 @@ optional arguments:
   -arch ARCHITECTURE, --architecture ARCHITECTURE
                         define system architecture
 ```
-debsnapshot-cli can throw a lot of output, some packages have =>200 versions. This is an example with the great spacefm [[1]](https://packages.debian.org/search?suite=default&section=all&arch=any&searchon=names&keywords=spacefm)[[2]](https://github.com/IgnorantGuru/spacefm) file manager that
+debsnapshot-cli can throw a lot of output, some packages have =>200 versions. This is an example with the  spacefm [[1]](https://packages.debian.org/search?suite=default&section=all&arch=any&searchon=names&keywords=spacefm)[[2]](https://github.com/IgnorantGuru/spacefm) file manager that
 has relatively a small number of version
 ###examples 
 ```
@@ -187,9 +189,9 @@ debsnapshot-cli -lbins -v 0.9.2-1 spacefm
 
 #####--info -v 0.9.2-1 -arch amd64
 by using the --info argument and the architecture it will print the ```first_seen``` entry. You have to add an architecture
-for the [official Debian ports](https://www.debian.org/ports/)
+for the [official Debian ports](https://www.debian.org/ports/).if ```-arch``` parameter does not match, it will  try to match 'all' as an architecture (if it exists)
 ```
- debsnapshot-cli --info -v 0.9.2-1 -arch amd64  spacefm
+$ debsnapshot-cli --info -v 0.9.2-1 -arch amd64  spacefm
 
 
 archive_name    name                       path                  first_seen        hash                                        size
@@ -197,10 +199,32 @@ archive_name    name                       path                  first_seen     
 debian          spacefm_0.9.2-1_amd64.deb  /pool/main/s/spacefm  20131221T035435Z  9ae5c18906e9c9676f82f43421e94dd478fc8796  378612
 
 
+URL
+----------------------------------------------------------------------------
+deb http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
+
+
+Append this URL to /etc/apt/sources.list.d/snapshot.list?
+do you want to continue [y/n/Y/N]:y
+Please enter your ROOT password:
+Password: 
+
 ```
+if you answer yes, it will add the relevant entry with a comment that indicates why this snapshot entry was added.
+
+```
+ $ cat /etc/apt/sources.list.d/snapshot.list 
+
+###Appended from debsnapshot-cli for spacefm:0.9.2-1
+deb http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
+
+```
+at a minimum,debsnapshot-cli will check if the folder ```/etc/apt/sources.list.d/``` exists, if it does not, it quits. 
+if a file with name snapshots.list exist in this path,it will append it
+if the file **does not** exist in sources.list.d/ folder, it will first create the file with the write the entry.
 
 Update with 
 ```apt-get -o Acquire::Check-Valid-Until=false update ```
-or if you  can just  update the snapshot repo with
+or you  can update only the snapshot repo with
 ```apt-get -o  Dir::Etc::sourcelist="sources.list.d/snapshot.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"  -o Acquire::Check-Valid-Until=false update```
-provided that the you have a snapshot.list in ```/etc/apt/sources.list.d/ ```
+provided that the you have a snapshot.list file in ```/etc/apt/sources.list.d/ ```
