@@ -90,12 +90,15 @@ def main(args=None):
         print(tabulate(result['result'], headers='keys'))
         print('\n')
         time_stamp = result['result'][0]['first_seen']
-        print('URL: ' + SNAPSHOT_URL.format(time_stamp=time_stamp))
+        url = SNAPSHOT_URL.format(time_stamp=time_stamp)
+        result = {'URL': url}
+        print(tabulate([result], headers="keys"))
+        # print('URL: ' + SNAPSHOT_URL.format(time_stamp=time_stamp))
         print('\n')
         print("Append this URL to /etc/apt/sources.list.d/snapshot.list?")
-        proceed = raw_input("do you want to continue [y/n]:")
-        ans = proceed.strip().lower()
-        if ans == 'y':
+        proceed = raw_input("do you want to continue [y/n/Y/N]:")
+        ans = lambda x: x.strip().lower()
+        if ans(proceed) == 'y':
             print("Please enter your ROOT password:")
             check(time_stamp, package=args.package_name, version=args.version[0])
         elif ans == 'n':
