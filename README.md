@@ -2,9 +2,9 @@
 python program to get package information from http://snapshot.debian.org/
 
 Get package information from the snapshot.debian.org ex. source versions,binary versions and most important ```first_seen``` 
-entry in order to install/downgrade that is no longer in the official {stable,testing,unstable} repositories by adding 
-```deb http://snapshot.debian.org/archive/debian/first_seen unstable main contrib non-free```
-and append the url to /etc/apt/sources.list.d/snapshot.list file
+entry in order to install/downgrade that is no longer in the official {stable,testing,unstable} repositories by adding/appending 
+```deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/first_seen unstable main contrib non-free```
+to the /etc/apt/sources.list.d/snapshot.list file
 
 ```
 $ debsnapshot-cli -h 
@@ -216,15 +216,15 @@ if you answer yes, it will add the relevant entry with a comment that indicates 
  $ cat /etc/apt/sources.list.d/snapshot.list 
 
 ###Appended from debsnapshot-cli for spacefm:0.9.2-1
-deb http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
+deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
 
 ```
 at a minimum,debsnapshot-cli will check if the folder ```/etc/apt/sources.list.d/``` exists, if it does not, it quits. 
 if a file with name snapshots.list exist in this path,it will append it
 if the file **does not** exist in sources.list.d/ folder, it will first create the file with the write the entry.
 
-Update with 
-```apt-get -o Acquire::Check-Valid-Until=false update ```
-or you  can update only the snapshot repo with
+Update with normal ```apt-get update``` or with
+```apt-get -o Acquire::Check-Valid-Until=false update ``` if the url does not contain ```[check-valid-until=no]```
+or you  can update **only** the snapshot repo with
 ```apt-get -o  Dir::Etc::sourcelist="sources.list.d/snapshot.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"  -o Acquire::Check-Valid-Until=false update```
 provided that the you have a snapshot.list file in ```/etc/apt/sources.list.d/ ```
