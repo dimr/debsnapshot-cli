@@ -6,7 +6,7 @@ from tabulate import tabulate
 import sys
 import os
 
-SNAPSHOT_URL = 'deb http://snapshot.debian.org/archive/debian/{time_stamp} unstable main'
+SNAPSHOT_URL = 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/{time_stamp} unstable main'
 SOURCES_PATH = '/etc/apt/sources.list.d/'
 SNAPSHOT_FILE = 'snapshot.list'
 
