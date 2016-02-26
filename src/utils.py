@@ -1,6 +1,8 @@
 import requests
 import logging
 import sys
+from pkg_resources import get_distribution, DistributionNotFound
+from __init__ import __version__, __title__
 
 BASE_URL = 'http://snapshot.debian.org/'
 ALL_PACKAGES = BASE_URL + 'mr/package/'
@@ -24,11 +26,13 @@ def url_join(a, b):
 class SnapConnection(object):
     def __init__(self, url):
         self.url = url
-        # print('------', self.url)
+        # but why needs strip()?
+        self.headers = {'User-Agent': " : ".join((__title__, __version__))}
 
     def __enter__(self):
         try:
-            self.response = requests.get(self.url)
+            self.response = requests.get(self.url, headers=self.headers)
+            # print self.response.request.headers
         except KeyboardInterrupt:
             logger.debug("\nBye")
         except requests.exceptions.ConnectionError:
@@ -47,7 +51,7 @@ class SnapConnection(object):
         self.response.close()
 
 
-def snapshot_get(url):
+def snapshot_get(url, ):
     with SnapConnection(url) as response:
         return response
 
