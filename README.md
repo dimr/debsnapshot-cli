@@ -239,7 +239,22 @@ if you answer yes and add your **root** password, it will add the relevant entry
 deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
 
 ```
+and hopefully you will find the target version
 
+```
+# apt-cache policy spacefm
+
+spacefm:
+  Installed: 1.0.4-1
+  Candidate: 1.0.4-1
+  Version table:
+ *** 1.0.4-1 500
+        500 http://httpredir.debian.org/debian unstable/main amd64 Packages
+        100 /var/lib/dpkg/status
+     0.9.2-1 500
+        500 http://snapshot.debian.org/archive/debian/20131221T035435Z unstable/main amd64 Packages
+
+```
 
 at a minimum,debsnapshot-cli will check if the folder ```/etc/apt/sources.list.d/``` exists, if it does not, it quits. 
 if a file with name snapshots.list exist in this path,it will append it
