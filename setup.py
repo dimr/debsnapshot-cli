@@ -7,7 +7,7 @@ with open('requirements.txt', 'r') as f:
 
 # taken from https://github.com/kennethreitz/requests/blob/master/setup.py
 version = ''
-with open('__init__.py', 'r') as fd:
+with open('src/__init__.py', 'r') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
