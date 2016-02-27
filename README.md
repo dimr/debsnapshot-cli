@@ -163,7 +163,7 @@ Number of packages: 22
 #####-ls version package
 by adding the version of the package, it will list all source files associated with this package at this version
 ```
-$ debsnapshot-cli -ls -v 0.9.2-1 spacefm
+$ debsnapshot-cli -ls 0.9.2-1 spacefm
 +------------------------------------------+
 | hash                                     |
 +==========================================+
@@ -194,7 +194,7 @@ debsnapshot-cli -lbins  0.9.2-1 spacefm
 by using the --info argument and the architecture it will print the ```first_seen``` entry. You have to add an architecture
 for the [official Debian ports](https://www.debian.org/ports/).if ```-arch``` parameter does not match, it will  try to match 'all' as an architecture (if it exists)
 ```
-$ debsnapshot-cli --first-seen  -arch amd64 0.9.2-1 spacefm
+$ debsnapshot-cli --first-seen -arch amd64 0.9.2-1 spacefm
 
 
 archive_name    name                       path                  first_seen        hash                                        size
