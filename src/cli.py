@@ -7,6 +7,7 @@ from tabulate import tabulate
 import sys
 from __init__ import __version__, __title__
 import os
+from utils import DEFAULT_TIMEOUT
 
 SNAPSHOT_URL = 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/{time_stamp} unstable main'
 SOURCES_PATH = '/etc/apt/sources.list.d/'
@@ -50,6 +51,7 @@ def create_parser(args=None):
     # parser.add_argument('-af', '--all-files', help='list all files associated with this source package at that version', action='store_true')
     parser.add_argument('--first-seen', help='get information e.x first_seen', action='store_true')
     parser.add_argument('-arch', '--architecture', nargs=1, type=str, help='define system architecture')
+    parser.add_argument('--time-out', nargs=1, default=DEFAULT_TIMEOUT, help='set timeout')
     # parser.add_argument('-all-packages', help='all packages', action='store_true')
     parser.add_argument('-v', '--version', help='print debsnapshot-cli version', action='version', version=' : '.join((__title__, __version__)))
     parser.add_argument('-w', '--write-to-file', help="add url entry to /etc/apt/sources.list.d/snapshot.list", action="store_true")
@@ -59,10 +61,15 @@ def create_parser(args=None):
 
 def main(args):
     args = create_parser(args)
+    timeout = args.time_out
+    if timeout == DEFAULT_TIMEOUT:
+        package = SnapshotRequest(args.package_name)
+    else:
+        package = SnapshotRequest(args.package_name, timeout=float(args.time_out[0]))
+
     if args.package_version is None:
         if args.all_source_versions:
             loggerCLI.debug(args)
-            package = SnapshotRequest(args.package_name)
             # pprint.pprint(package.list_all_available_source_versions())
             result = package.list_all_available_source_versions()
             print(tabulate([[i] for i in result], tablefmt='grid', headers=["version"]))
@@ -78,17 +85,15 @@ def main(args):
             print('\nNumber of packages: %d' % len(result['result']))
         else:
             loggerCLI.debug(args)
-            package = SnapshotRequest(args.package_name)
+            # package = SnapshotRequest(args.package_name, timeout=timeout)
             result = package.general_info()
             print(tabulate(result, tablefmt='grid', headers='keys'))  # , tablefmt='simple'))
 
     elif args.package_version is not None:
         if args.all_source_versions:
-            package = SnapshotRequest(args.package_name)
             result = package.list_all_sources_for_this_package_at_version(args.package_version)
             print(tabulate(result['result'], tablefmt='grid', headers='keys'))
         elif args.all_binpackages_for_package_version:
-            package = SnapshotRequest(args.package_name)
             result = package.list_all_binary_packages_for_this_package_at_version(args.package_version)
             print(tabulate(result, tablefmt='grid', headers='keys'))
         elif args.first_seen and args.architecture:
