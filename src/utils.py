@@ -1,20 +1,22 @@
 import requests
 import logging
 import sys
+from pkg_resources import get_distribution, DistributionNotFound
+from __init__ import __version__, __title__
 
 BASE_URL = 'http://snapshot.debian.org/'
 ALL_PACKAGES = BASE_URL + 'mr/package/'
 BINARY_URL = BASE_URL + 'binary/{binary}/'
 ALL_FILES = BASE_URL + 'package/{binary}/{version}/allfiles'
 INFO_HASH_URL = BASE_URL + "file/{hash}/info"
-
+DEFAULT_TIMEOUT = 10
 DEBIAN_PORTS = ['amd64', 'armel', 'armhf', 'i386', 'ia64', 'kfreebsd-amd64', 'kfreebsd-i386', 'mips', 'mipsel',
                 'powerpc', 'ppc64el',
                 's390', 'sparc']
 
 logging.basicConfig(level=logging.CRITICAL)
 logging.getLogger("requests").setLevel(logging.CRITICAL)
-logger = logging.getLogger('__apt-snapshot__')
+logger = logging.getLogger('__debsnapshot-cli__')
 
 
 def url_join(a, b):
@@ -22,13 +24,19 @@ def url_join(a, b):
 
 
 class SnapConnection(object):
-    def __init__(self, url):
+    def __init__(self, url, timeout):
         self.url = url
-        # print('------', self.url)
+        # self.timemout = timeout
+        # if 'timeout' in kwargs.keys():
+        #     self.timeout = kwargs['timeout']
+        # but why needs strip()?
+        self.timeout = timeout
+        self.headers = {'User-Agent': " : ".join((__title__, __version__))}
 
     def __enter__(self):
         try:
-            self.response = requests.get(self.url)
+            self.response = requests.get(self.url, timeout=self.timeout, headers=self.headers)
+            #print self.response
         except KeyboardInterrupt:
             logger.debug("\nBye")
         except requests.exceptions.ConnectionError:
@@ -47,8 +55,8 @@ class SnapConnection(object):
         self.response.close()
 
 
-def snapshot_get(url):
-    with SnapConnection(url) as response:
+def snapshot_get(url, timeout):
+    with SnapConnection(url, timeout) as response:
         return response
 
 
