@@ -59,7 +59,7 @@ def create_parser(args=None):
     return parser.parse_args(args)
 
 
-def main(args):
+def main(args=None):
     args = create_parser(args)
     timeout = args.time_out
     if timeout == DEFAULT_TIMEOUT:
