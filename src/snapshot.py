@@ -4,9 +4,9 @@ from utils import BASE_URL, ALL_PACKAGES
 import requests
 import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.CRITICAL)
 # logging.getLogger("requests").setLevel(logging.CRITICAL)
-logger = logging.getLogger('__apt-snapshot__')
+logger = logging.getLogger('__debsnapshot-cli__')
 
 
 def get_all_packages():

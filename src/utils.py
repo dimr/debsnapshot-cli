@@ -16,7 +16,7 @@ DEBIAN_PORTS = ['amd64', 'armel', 'armhf', 'i386', 'ia64', 'kfreebsd-amd64', 'kf
 
 logging.basicConfig(level=logging.CRITICAL)
 logging.getLogger("requests").setLevel(logging.CRITICAL)
-logger = logging.getLogger('__apt-snapshot__')
+logger = logging.getLogger('__debsnapshot-cli__')
 
 
 def url_join(a, b):
