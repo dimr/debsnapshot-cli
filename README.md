@@ -1,5 +1,5 @@
 # debsnapshot-cli
-python program to get package information from http://snapshot.debian.org/
+python program to get package information from http://snapshot.debian.org/ for Debian and Debian based distibutions.
 
 Get package information from the snapshot.debian.org ex. source versions,binary versions and most important ```first_seen``` 
 entry in order to install/downgrade that is no longer in the official {stable,testing,unstable} repositories by adding/appending 
@@ -8,19 +8,18 @@ to the /etc/apt/sources.list.d/snapshot.list file
 
 ```
 $ debsnapshot-cli -h 
-usage: debsnapshot-cli [-h] [-v VERSION] [-lb] [-ls] [-lbins] [-i]
-                       [-arch ARCHITECTURE]
-                       package_name
+usage: debsnapshot-cli [-h] [-lb] [-ls] [-lbins] [--first-seen]
+                       [-arch ARCHITECTURE] [--time-out TIME_OUT] [-v] [-w]
+                       [package_version] package_name
 
 find package information in debian.snapshot.org
 
 positional arguments:
+  package_version       set the target version of the package you wish you
   package_name          write the package name you wish to find
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v VERSION, --version VERSION
-                        set the target version of the package you wish you
   -lb, --all-binary-versions
                         find binary package versions and corresponding source
                         names and versions
@@ -29,11 +28,15 @@ optional arguments:
   -lbins, --all-binpackages-for-package-version
                         list all binary packages associated with this source
                         package at that version
-  -i, --info            get information e.x first_seen
+  --first-seen          get information e.x first_seen
   -arch ARCHITECTURE, --architecture ARCHITECTURE
                         define system architecture
+  --time-out TIME_OUT   set timeout
+  -v, --version         print debsnapshot-cli version
+  -w, --write-to-file   add url entry to /etc/apt/sources.list.d/snapshot.list
+
 ```
-debsnapshot-cli can throw a lot of output, some packages have =>200 versions. This is an example with the  spacefm [[1]](https://packages.debian.org/search?suite=default&section=all&arch=any&searchon=names&keywords=spacefm)[[2]](https://github.com/IgnorantGuru/spacefm) file manager that
+debsnapshot-cli can throw a lot of output, some packages have =>200 versions but you can pipe it with |less or |head -n. This is an example with the  spacefm [[1]](https://packages.debian.org/search?suite=default&section=all&arch=any&searchon=names&keywords=spacefm)[[2]](https://github.com/IgnorantGuru/spacefm) file manager that
 has relatively a small number of version
 ###examples 
 ```
@@ -102,7 +105,7 @@ Will print all available source versions
 Number of versions:  19
 ```
 
-#####-lb
+#####-lb version package  
 Will print all binary package versions and corresponding source names and versions
 ```
 $ debsnapshot-cli -lb spacefm
@@ -157,7 +160,7 @@ $ debsnapshot-cli -lb spacefm
 Number of packages: 22
 ```
 
-#####-ls -v
+#####-ls version package
 by adding the version of the package, it will list all source files associated with this package at this version
 ```
 $ debsnapshot-cli -ls -v 0.9.2-1 spacefm
@@ -172,10 +175,10 @@ $ debsnapshot-cli -ls -v 0.9.2-1 spacefm
 +------------------------------------------+
 ```
 
-#####-lbins -v 0.9.2-1
+#####-lbins version package
 lists all binary packages associated with this source package at that version
 ```
-debsnapshot-cli -lbins -v 0.9.2-1 spacefm
+debsnapshot-cli -lbins  0.9.2-1 spacefm
 +-----------+----------------+
 | version   | name           |
 +===========+================+
@@ -187,11 +190,11 @@ debsnapshot-cli -lbins -v 0.9.2-1 spacefm
 +-----------+----------------+
 ```
 
-#####--info -v 0.9.2-1 -arch amd64
+#####--first-seen  -arch amd64 version package
 by using the --info argument and the architecture it will print the ```first_seen``` entry. You have to add an architecture
 for the [official Debian ports](https://www.debian.org/ports/).if ```-arch``` parameter does not match, it will  try to match 'all' as an architecture (if it exists)
 ```
-$ debsnapshot-cli --info -v 0.9.2-1 -arch amd64  spacefm
+$ debsnapshot-cli --first-seen  -arch amd64 0.9.2-1 spacefm
 
 
 archive_name    name                       path                  first_seen        hash                                        size
@@ -203,6 +206,22 @@ URL
 ----------------------------------------------------------------------------
 deb http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
 
+```
+if you add ```-w``` or ```--write-to-file``` to the previous command it will ask you to write to /etc/apt/sources.list.d/snapshot.list
+
+```
+$ debsnapshot-cli --first-seen  -arch amd64 --write-to-file 0.9.2-1 spacefm
+
+
+archive_name    name                       path                  first_seen        hash                                        size
+--------------  -------------------------  --------------------  ----------------  ----------------------------------------  ------
+debian          spacefm_0.9.2-1_amd64.deb  /pool/main/s/spacefm  20131221T035435Z  9ae5c18906e9c9676f82f43421e94dd478fc8796  378612
+
+
+URL
+---------------------------------------------------------------------------------------------------
+deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
+
 
 Append this URL to /etc/apt/sources.list.d/snapshot.list?
 do you want to continue [y/n/Y/N]:y
@@ -210,7 +229,8 @@ Please enter your ROOT password:
 Password: 
 
 ```
-if you answer yes, it will add the relevant entry with a comment that indicates why this snapshot entry was added.
+
+if you answer yes and add your **root** password, it will add the relevant entry with a comment that indicates why this snapshot entry was added.
 
 ```
  $ cat /etc/apt/sources.list.d/snapshot.list 
@@ -219,6 +239,8 @@ if you answer yes, it will add the relevant entry with a comment that indicates 
 deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20131221T035435Z unstable main
 
 ```
+
+
 at a minimum,debsnapshot-cli will check if the folder ```/etc/apt/sources.list.d/``` exists, if it does not, it quits. 
 if a file with name snapshots.list exist in this path,it will append it
 if the file **does not** exist in sources.list.d/ folder, it will first create the file with the write the entry.
