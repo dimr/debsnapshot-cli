@@ -1,6 +1,20 @@
 # debsnapshot-cli
 python program to get package information from http://snapshot.debian.org/ for Debian and Debian based distibutions.
 
+not on pypi yet, to try it , download & unzip
+
+install as a super user
+
+```
+python setup.py install --record locations.txt
+```
+
+uninstall
+
+```
+cat files.txt | xargs rm -rf
+```
+
 Get package information from the snapshot.debian.org ex. source versions,binary versions and most important ```first_seen``` 
 entry in order to install/downgrade that is no longer in the official {stable,testing,unstable} repositories by adding/appending 
 ```deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/first_seen unstable main contrib non-free```
