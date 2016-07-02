@@ -7,9 +7,10 @@ from tabulate import tabulate
 import sys
 from __init__ import __version__, __title__
 import os
-from utils import DEFAULT_TIMEOUT
+from utils import DEFAULT_TIMEOUT, DEBIAN_PORTS
+import subprocess
 
-SNAPSHOT_URL = 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/{time_stamp} unstable main'
+SNAPSHOT_URL = 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/{time_stamp} unstable main contrib non-free'
 SOURCES_PATH = '/etc/apt/sources.list.d/'
 SNAPSHOT_FILE = 'snapshot.list'
 
@@ -28,13 +29,11 @@ def check(time_stamp, package=None, version=None):
     # root=0 non_root=1000
     normal_user = True if os.geteuid() is not 0 else False
     if file_ok and normal_user:
-        os.system('su -c "python {script} append {time_stamp} {package} {version}"'.format(script=os.path.join(os.path.dirname(__file__), script_name), time_stamp=time_stamp,
-                                                                                           package=package, version=version))
+        subprocess.call(['sudo','-k','python',os.path.join(os.path.dirname(__file__), script_name),'append',time_stamp,package,version])
     elif not file_ok and normal_user:
-        os.system('su -c "python {script} write {time_stamp} {package} {version}"'.format(script=os.path.join(os.path.dirname(__file__), script_name), time_stamp=time_stamp,
-                                                                                          package=package, version=version))
+        subprocess.call(['sudo','-k','python',os.path.join(os.path.dirname(__file__), script_name),'write',time_stamp,package,version])
     elif not normal_user:
-        print("you should not run this script as ROOT")
+        print("you should not run this script as sudo user")
 
 
 def create_parser(args=None):
@@ -50,11 +49,12 @@ def create_parser(args=None):
     parser.add_argument('-lbins', '--all-binpackages-for-package-version', help='list all binary packages associated with this source package at that version', action='store_true')
     # parser.add_argument('-af', '--all-files', help='list all files associated with this source package at that version', action='store_true')
     parser.add_argument('--first-seen', help='get information e.x first_seen', action='store_true')
-    parser.add_argument('-arch', '--architecture', nargs=1, type=str, help='define system architecture')
+    parser.add_argument('-arch', '--architecture', nargs=1, type=str, choices=DEBIAN_PORTS, help='define system architecture')
     parser.add_argument('--time-out', nargs=1, default=DEFAULT_TIMEOUT, help='set timeout')
     # parser.add_argument('-all-packages', help='all packages', action='store_true')
     parser.add_argument('-v', '--version', help='print debsnapshot-cli version', action='version', version=' : '.join((__title__, __version__)))
     parser.add_argument('-w', '--write-to-file', help="add url entry to /etc/apt/sources.list.d/snapshot.list", action="store_true")
+    # parser.parse_args('--proxy fawef fds grea'.split())
     # args = parser.parse_args(args)
     return parser.parse_args(args)
 
@@ -117,7 +117,7 @@ def main(args=None):
                 proceed = raw_input("do you want to continue [y/n/Y/N]:")
                 ans = lambda x: x.strip().lower()
                 if ans(proceed) == 'y':
-                    print("Please enter your ROOT password:")
+                    print("Please enter your sudo password:")
                     check(time_stamp, package=args.package_name, version=args.package_version)
                 elif ans == 'n':
                     print('\nBye!')
