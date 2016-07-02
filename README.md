@@ -239,12 +239,12 @@ deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20131221T03
 
 Append this URL to /etc/apt/sources.list.d/snapshot.list?
 do you want to continue [y/n/Y/N]:y
-Please enter your ROOT password:
+Please enter your sudo password:
 Password: 
 
 ```
 
-if you answer yes and add your **root** password, it will add the relevant entry with a comment that indicates why this snapshot entry was added.
+if you answer yes and add your **sudo** password, it will add the relevant entry with a comment that indicates why this snapshot entry was added.
 
 ```
  $ cat /etc/apt/sources.list.d/snapshot.list 
