@@ -12,7 +12,7 @@ python setup.py install --record locations.txt
 uninstall
 
 ```
-cat files.txt | xargs rm -rf
+cat locations.txt | xargs rm -rf
 ```
 
 Get package information from the snapshot.debian.org ex. source versions,binary versions and most important ```first_seen``` 
